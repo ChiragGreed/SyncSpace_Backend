@@ -1,5 +1,6 @@
 import JWT from "jsonwebtoken";
-import { Config } from "../config.js";
+import { Config } from "../config/config.js";
+
 
 export const verifyToken = (req, res, next) => {
     const { Access_Token } = req.cookies;

@@ -1,8 +1,8 @@
 import { users } from '../mockData.js';
 import JWT from 'jsonwebtoken';
-import { Config } from '../config.js';
-import crypto from 'crypto';
-import { sanitizeUser } from '../utils/sanitizeUser.js';
+import { Config } from '../config/config.js';
+import userModel from '../modles/userModel.js';
+import bcrypt from 'bcryptjs';
 
 const generateToken = (userId) => {
     return JWT.sign(
@@ -12,48 +12,45 @@ const generateToken = (userId) => {
     );
 }
 
-export const register = (req, res, next) => {
+export const register = async (req, res, next) => {
     try {
         const { fullName, email, role, password } = req.body;
 
-        const isAlreadyUser = users.find(user => user.email === email);
+        const isAlreadyUser = await userModel.findOne({ email: email });
 
         if (isAlreadyUser) return res.status(400).json({
             message: "User already exists",
             success: false
         })
 
-        const userId = crypto.randomUUID();
+        const user = await userModel.create({ fullName, email, role, password });
 
-        const newUser = { userId, fullName, email, role, password };
-        users.push(newUser);
-
-        const token = generateToken(userId);
+        const token = generateToken(user._id);
 
         res.cookie('Access_Token', token);
 
         res.status(201).json({
             message: "User registered successfully",
             success: true,
-            user: sanitizeUser(newUser)
+            user
         });
     } catch (err) {
         next(err);
     }
 }
 
-export const login = (req, res, next) => {
+export const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
-        const user = users.find(user => user.email === email);
+        const user = await userModel.findOne({ email }).select("+password");
 
         if (!user) return res.status(404).json({
             message: "User do not exist from the given email",
             success: false
         })
 
-        const isPasswordCorrect = user.password === password;
+        const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
         if (!isPasswordCorrect) return res.status(400).json({
             message: "Password is incorrect",
@@ -67,19 +64,19 @@ export const login = (req, res, next) => {
         res.status(200).json({
             message: "User logged in successfully",
             success: true,
-            user: sanitizeUser(user)
+            user
         });
     } catch (err) {
         next(err);
     }
 }
 
-export const getMe = (req, res, next) => {
+export const getMe = async (req, res, next) => {
     try {
 
         const userId = req.user;
 
-        const user = users.find(user => user.userId === userId);
+        const user = await userModel.findOne({ _id: userId });
 
         if (!user) return res.status(404).json({
             message: `No user found with id ${userId}`,
@@ -89,7 +86,7 @@ export const getMe = (req, res, next) => {
         res.status(200).json({
             message: "User fetched successfully",
             success: true,
-            user: sanitizeUser(user)
+            user
         });
     } catch (err) {
         next(err);
