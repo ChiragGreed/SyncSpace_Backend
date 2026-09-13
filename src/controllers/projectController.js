@@ -1,19 +1,23 @@
 import { projects } from "../mockData.js";
 import crypto from "crypto";
+import projectModel from "../modles/projectModel.js";
 
-export const createProject = (req, res, next) => {
+export const createProject = async (req, res, next) => {
     try {
-        const { title, description, status = "inProgress", dueDate } = req.body;
+        const userId = req.user;
+        const admin = userId;
 
-        const projectId = crypto.randomUUID();
-        const newProject = { projectId, title, description, status, dueDate, members: [req.user], taskList: [] };
+        const { title, description, status, dueDate } = req.body;
 
-        projects.push(newProject);
+        let members = req.body.members || [];
+        members.push(userId);
+
+        const project = await projectModel.create({ admin, title, description, status, dueDate, members });
 
         res.status(201).json({
             message: "Project created successfully",
             success: true,
-            project: newProject
+            project
         })
     } catch (err) {
         next(err);

@@ -57,7 +57,7 @@ export const login = async (req, res, next) => {
             success: false
         })
 
-        const token = generateToken(user.userId);
+        const token = generateToken(user._id);
 
         res.cookie('Access_Token', token);
 
