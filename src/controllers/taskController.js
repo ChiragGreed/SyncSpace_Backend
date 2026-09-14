@@ -45,7 +45,7 @@ export const getTasks = async (req, res, next) => {
         const tasks = await taskModel.find({ assignee: userId });
 
         if (tasks.length < 1) return res.status(200).json({
-            message: "No task to show",
+            message: "No tasks to show",
             success: true
         })
 
@@ -159,17 +159,20 @@ export const updateTaskStatus = async (req, res, next) => {
         const { taskId } = req.params;
         const { status } = req.body;
 
-        const task = await taskModel.findByIdAndUpdate(taskId, { status: status });
+        const task = await taskModel.findById(taskId);
 
         if (!task) return res.status(404).json({
             message: `Task do not exist with ${taskId}`,
             success: false,
         })
 
-        if (task.assignee.toString() !== userId.toString()) return res.status(200).json({
+        if (task.assignee.toString() !== userId.toString()) return res.status(403).json({
             message: "Task assigned to another user",
             success: false
         })
+
+        task.status = status;
+        await task.save();
 
         res.status(200).json({
             message: "Task status updated successfully",

@@ -2,7 +2,7 @@ import { body, query, validationResult } from 'express-validator';
 
 export const TASK_STATUSES = ["toDo", "inProgress", "completed"];
 export const TASK_PRIORITIES = ["low", "medium", "high"];
-export const PROJECT_STATUSES = ["toDo", "inProgress", "completed"];
+export const PROJECT_STATUSES = ["inProgress", "completed"];
 export const INVITATION_STATUSES = ["accepted", "rejected"];
 
 const handleValidationErrors = (req, res, next) => {

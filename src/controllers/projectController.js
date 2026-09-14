@@ -1,5 +1,4 @@
 import { projects } from "../mockData.js";
-import crypto from "crypto";
 import projectModel from "../modles/projectModel.js";
 
 export const createProject = async (req, res, next) => {
@@ -10,7 +9,6 @@ export const createProject = async (req, res, next) => {
         const { title, description, status, dueDate } = req.body;
 
         let members = req.body.members || [];
-        members.push(userId);
 
         const project = await projectModel.create({ admin, title, description, status, dueDate, members });
 
@@ -24,8 +22,17 @@ export const createProject = async (req, res, next) => {
     }
 }
 
-export const getProjects = (req, res, next) => {
+export const getProjects = async (req, res, next) => {
     try {
+        const userId = req.user;
+
+        const projects = await projectModel.find({ members: userId });
+
+        if (!projects) return res.status(200).json({
+            message: "No projects to show",
+            success: true
+        })
+
         res.status(200).json({
             message: "Projects fetched successfully",
             success: true,
@@ -36,11 +43,11 @@ export const getProjects = (req, res, next) => {
     }
 }
 
-export const getProject = (req, res, next) => {
+export const getProject = async (req, res, next) => {
     try {
         const { projectId } = req.params;
 
-        const project = projects.find(project => project.projectId === projectId);
+        const project = await projectModel.findById(projectId);
 
         if (!project) return res.status(404).json({
             message: `Project does not exist with id ${projectId}`,
@@ -57,18 +64,25 @@ export const getProject = (req, res, next) => {
     }
 }
 
-export const updateProject = (req, res, next) => {
+export const updateProject = async (req, res, next) => {
     try {
         const { projectId } = req.params;
-
-        const project = projects.find(project => project.projectId === projectId);
+        const userId = req.user;
+        const project = await projectModel.findById(projectId);
 
         if (!project) return res.status(404).json({
             message: `Project does not exist with id ${projectId}`,
             success: false
         })
 
-        Object.assign(project, req.body);
+        if (!(project.admin.toString() === userId.toString()))
+            return res.status(403).json({
+                message: "Only project admin can update this project",
+                success: false
+            })
+
+        await project.updateOne(req.body);
+
 
         res.status(200).json({
             message: "Project updated successfully",
@@ -80,17 +94,57 @@ export const updateProject = (req, res, next) => {
     }
 }
 
-export const deleteProject = (req, res, next) => {
+export const updateProjectStatus = async (req, res, next) => {
     try {
         const { projectId } = req.params;
-        const projectIndex = projects.findIndex(project => project.projectId === projectId);
+        const { status } = req.body;
+        const userId = req.user;
 
-        if (projectIndex === -1) return res.status(404).json({
-            message: "Project does not exist",
+        const project = await projectModel.findById(projectId);
+
+        if (!project) return res.status(404).json({
+            message: `Project does not exist with id ${projectId}`,
             success: false
         })
 
-        projects.splice(projectIndex, 1);
+        if (!(project.admin.toString() === userId.toString()))
+            return res.status(403).json({
+                message: "Only project admin can update this project",
+                success: false
+            })
+
+        project.status = status;
+        await project.save();
+
+        res.status(200).json({
+            message: "Project updated successfully",
+            success: true,
+            project
+        })
+    } catch (err) {
+        next(err);
+    }
+}
+
+export const deleteProject = async (req, res, next) => {
+    try {
+        const userId = req.user;
+        const { projectId } = req.params;
+
+        const project = await projectModel.findById(projectId);
+
+        if (!project) return res.status(404).json({
+            message: `Project does not exist with id ${projectId}`,
+            success: false
+        })
+
+        if (!(project.admin.toString() === userId.toString()))
+            return res.status(403).json({
+                message: "Only project admin can update this project",
+                success: false
+            })
+
+        await project.deleteOne({ projectId });
 
         res.status(204).send();
     } catch (err) {
