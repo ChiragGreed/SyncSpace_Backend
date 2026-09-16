@@ -1,4 +1,3 @@
-import { users } from '../mockData.js';
 import JWT from 'jsonwebtoken';
 import { Config } from '../config/config.js';
 import userModel from '../modles/userModel.js';
@@ -46,14 +45,14 @@ export const login = async (req, res, next) => {
         const user = await userModel.findOne({ email }).select("+password");
 
         if (!user) return res.status(404).json({
-            message: "User do not exist from the given email",
+            message: "Invalid creditentials",
             success: false
         })
 
         const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
         if (!isPasswordCorrect) return res.status(400).json({
-            message: "Password is incorrect",
+            message: "Invalid creditentials",
             success: false
         })
 

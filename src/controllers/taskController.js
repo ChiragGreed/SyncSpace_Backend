@@ -1,7 +1,4 @@
-import { tasks } from '../mockData.js';
-import crypto from 'crypto';
 import taskModel from '../modles/TaskModel.js';
-import projectModel from '../modles/projectModel.js';
 
 export const createTask = async (req, res, next) => {
     try {
@@ -109,7 +106,8 @@ export const updateTask = async (req, res, next) => {
         const { taskId } = req.params;
         const userId = req.user;
 
-        const existingTask = await taskModel.findOne({ _id: taskId });
+        const existingTask = await taskModel.findOne({ _id: taskId }).populate("projectId");
+        const project = existingTask.projectId;
 
         if (!existingTask) return res.status(404).json({
             message: `Task do not exist with ${taskId}`,
@@ -117,14 +115,7 @@ export const updateTask = async (req, res, next) => {
         })
 
         // Check if task belongs to a project
-        if (existingTask.projectId) {
-
-            const project = await projectModel.findOne({ _id: existingTask.projectId });
-
-            if (!project) return res.status(404).json({
-                message: "Project does not exist",
-                success: false,
-            })
+        if (project) {
 
             // Check if user is project admin
             if (project.admin.toString() !== userId.toString()) return res.status(403).json({

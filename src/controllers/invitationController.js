@@ -1,51 +1,37 @@
-import { invitations, projects, users, notifications } from "../mockData.js";
+import { notifications } from "../mockData.js";
 import crypto from "crypto";
-
-const createNotification = (userId, type, invitationId, message) => {
-    const notification = {
-        notificationId: crypto.randomUUID(),
-        userId,
-        type,
-        invitationId,
-        message,
-        isRead: false,
-        createdAt: new Date().toISOString()
-    };
-    notifications.push(notification);
-    return notification;
-};
+import projectModel from "../modles/projectModel.js"
+import userModel from "../modles/userModel.js"
+import invitationModel from "../modles/invitationsModel.js";
+import notificationModel from "../modles/notificationModel.js";
 
 // POST /api/invitations
 // Body: { projectId, userIds: [...] }
 // Only an existing project member can invite others. Invalid targets in the
-// batch (nonexistent user, self, already a member, duplicate pending invite)
-// are skipped individually rather than failing the whole request.
-export const createInvitations = (req, res, next) => {
+// batch (nonexistent user, self, already a member, duplicate pending invite) are skipped individually rather than failing the whole request.
+export const createInvitations = async (req, res, next) => {
     try {
         const senderId = req.user;
-        const { projectId, userIds } = req.body;
+        const { projectId, receiversId } = req.body;
 
-        const project = projects.find(project => project.projectId === projectId);
+        const project = await projectModel.findById(projectId);
 
         if (!project) return res.status(404).json({
             message: `Project does not exist with id ${projectId}`,
             success: false
         });
-       
+
         if (!project.members.includes(senderId)) return res.status(403).json({
             message: "Only existing project members can send invitations",
             success: false
         });
 
-        const sender = users.find(user => user.userId === senderId);
-
         const created = [];
         const skipped = [];
 
-        const uniqueUserIds = [...new Set(userIds)];
-
-        uniqueUserIds.forEach(receiverId => {
-            const receiver = users.find(user => user.userId === receiverId);
+        await Promise.all(receiversId.map(async (receiverId) => {
+            const receiver = await userModel.findById(receiverId);
+            const sender = await userModel.findById(senderId);
 
             if (!receiver) {
                 skipped.push({ userId: receiverId, reason: "User does not exist" });
@@ -59,34 +45,17 @@ export const createInvitations = (req, res, next) => {
                 skipped.push({ userId: receiverId, reason: "User is already a project member" });
                 return;
             }
-            const duplicatePending = invitations.find(invitation =>
-                invitation.projectId === projectId &&
-                invitation.receiverId === receiverId &&
-                invitation.status === "pending"
-            );
-            if (duplicatePending) {
+            const duplicatePending = await invitationModel.find({ $and: [{ projectId: projectId }, { receiverId: receiverId }, { status: "pending" }] });
+
+            if (duplicatePending.length > 0) {
                 skipped.push({ userId: receiverId, reason: "A pending invitation already exists for this user" });
                 return;
             }
-
-            const invitation = {
-                invitationId: crypto.randomUUID(),
-                projectId,
-                senderId,
-                receiverId,
-                status: "pending",
-                createdAt: new Date().toISOString()
-            };
-            invitations.push(invitation);
+            const invitation = await invitationModel.create({ projectId, senderId, receiverId, status: "pending", });
             created.push(invitation);
 
-            createNotification(
-                receiverId,
-                "invitation_received",
-                invitation.invitationId,
-                `${sender?.fullName ?? "Someone"} invited you to join "${project.title}"`
-            );
-        });
+            const temp = await notificationModel.create({ userId: receiverId, message: `${sender?.fullName ?? "Someone"} invited you to join project: "${project.title}"` });
+        }));
 
         res.status(201).json({
             message: "Invitations processed",
@@ -100,10 +69,15 @@ export const createInvitations = (req, res, next) => {
 };
 
 // GET /api/invitations/received
-export const getReceivedInvitations = (req, res, next) => {
+export const getReceivedInvitations = async (req, res, next) => {
     try {
-        const receiverId = req.user;
-        const received = invitations.filter(invitation => invitation.receiverId === receiverId);
+        const userId = req.user;
+        const received = await invitationModel.find({ receiverId: userId, status: "pending" });
+
+        if (!received) return res.status(200).json({
+            message: "No invitations received",
+            success: true
+        })
 
         res.status(200).json({
             message: "Received invitations fetched successfully",
@@ -116,10 +90,15 @@ export const getReceivedInvitations = (req, res, next) => {
 };
 
 // GET /api/invitations/sent
-export const getSentInvitations = (req, res, next) => {
+export const getSentInvitations = async (req, res, next) => {
     try {
-        const senderId = req.user;
-        const sent = invitations.filter(invitation => invitation.senderId === senderId);
+        const userId = req.user;
+        const sent = await invitationModel.find({ senderId: userId });
+
+        if (!sent) return res.status(200).json({
+            message: "No invitations sent",
+            success: true
+        })
 
         res.status(200).json({
             message: "Sent invitations fetched successfully",
@@ -134,20 +113,20 @@ export const getSentInvitations = (req, res, next) => {
 // PATCH /api/invitations/:invitationId
 // Body: { status: "accepted" | "rejected" }
 // Only the receiver can respond, and only while the invitation is still pending.
-export const respondToInvitation = (req, res, next) => {
+export const respondToInvitation = async (req, res, next) => {
     try {
         const { invitationId } = req.params;
         const { status } = req.body;
-        const currentUserId = req.user;
+        const userId = req.user;
 
-        const invitation = invitations.find(invitation => invitation.invitationId === invitationId);
+        const invitation = await invitationModel.findById(invitationId).populate(['projectId', 'receiverId']);
 
         if (!invitation) return res.status(404).json({
             message: `Invitation does not exist with id ${invitationId}`,
             success: false
         });
 
-        if (invitation.receiverId !== currentUserId) return res.status(403).json({
+        if (invitation.receiverId._id.toString() !== userId) return res.status(403).json({
             message: "Only the invited user can respond to this invitation",
             success: false
         });
@@ -157,29 +136,23 @@ export const respondToInvitation = (req, res, next) => {
             success: false
         });
 
-        const project = projects.find(project => project.projectId === invitation.projectId);
-        const receiver = users.find(user => user.userId === invitation.receiverId);
+        const project = invitation.projectId;
+        const receiver = invitation.receiverId;
+
+        if (status === "accepted") {
+            if (project && !project.members.includes(receiver._id)) {
+                project.members.push(invitation.receiverId);
+            }
+
+            await notificationModel.create({ userId: invitation.senderId, message: `${invitation.receiverId?.fullName ?? "Someone"} accepted your invitation to join project: "${project?.title ?? "the project"}"` });
+        } else {
+            await notificationModel.create({ userId: invitation.senderId, message: `${invitation.receiverId?.fullName ?? "Someone"} declined your invitation to join project: "${project?.title ?? "the project"}"` });
+        }
 
         invitation.status = status;
 
-        if (status === "accepted") {
-            if (project && !project.members.includes(invitation.receiverId)) {
-                project.members.push(invitation.receiverId);
-            }
-            createNotification(
-                invitation.senderId,
-                "invitation_accepted",
-                invitation.invitationId,
-                `${receiver?.fullName ?? "Someone"} accepted your invitation to join "${project?.title ?? "the project"}"`
-            );
-        } else {
-            createNotification(
-                invitation.senderId,
-                "invitation_rejected",
-                invitation.invitationId,
-                `${receiver?.fullName ?? "Someone"} declined your invitation to join "${project?.title ?? "the project"}"`
-            );
-        }
+        await invitation.save();
+        await project.save();
 
         res.status(200).json({
             message: `Invitation ${status} successfully`,

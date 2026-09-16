@@ -1,4 +1,3 @@
-import { projects } from "../mockData.js";
 import projectModel from "../modles/projectModel.js";
 
 export const createProject = async (req, res, next) => {
@@ -8,9 +7,7 @@ export const createProject = async (req, res, next) => {
 
         const { title, description, status, dueDate } = req.body;
 
-        let members = req.body.members || [];
-
-        const project = await projectModel.create({ admin, title, description, status, dueDate, members });
+        const project = await projectModel.create({ admin, title, description, status, dueDate, members: [userId] });
 
         res.status(201).json({
             message: "Project created successfully",

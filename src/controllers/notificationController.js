@@ -1,12 +1,11 @@
 import { notifications } from "../mockData.js";
+import notificationModel from "../modles/notificationModel.js";
 
 // GET /api/notifications
-export const getNotifications = (req, res, next) => {
+export const getNotifications = async (req, res, next) => {
     try {
         const userId = req.user;
-        const userNotifications = notifications
-            .filter(notification => notification.userId === userId)
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const userNotifications = await notificationModel.find({ userId }).sort({ createdAt: -1 });
 
         res.status(200).json({
             message: "Notifications fetched successfully",
@@ -19,24 +18,25 @@ export const getNotifications = (req, res, next) => {
 };
 
 // PATCH /api/notifications/:notificationId/read
-export const markNotificationRead = (req, res, next) => {
+export const markNotificationRead = async (req, res, next) => {
     try {
         const { notificationId } = req.params;
         const userId = req.user;
 
-        const notification = notifications.find(notification => notification.notificationId === notificationId);
+        const notification = await notificationModel.findById(notificationId);
 
         if (!notification) return res.status(404).json({
             message: `Notification does not exist with id ${notificationId}`,
             success: false
         });
 
-        if (notification.userId !== userId) return res.status(403).json({
+        if (notification.userId.toString() !== userId) return res.status(403).json({
             message: "You cannot modify another user's notification",
             success: false
         });
 
         notification.isRead = true;
+        await notification.save();
 
         res.status(200).json({
             message: "Notification marked as read",
@@ -49,22 +49,15 @@ export const markNotificationRead = (req, res, next) => {
 };
 
 // PATCH /api/notifications/read-all
-export const markAllNotificationsRead = (req, res, next) => {
+export const markAllNotificationsRead = async (req, res, next) => {
     try {
         const userId = req.user;
-        let updatedCount = 0;
-
-        notifications.forEach(notification => {
-            if (notification.userId === userId && !notification.isRead) {
-                notification.isRead = true;
-                updatedCount++;
-            }
-        });
+        const notification = await notificationModel.updateMany({ userId }, { isRead: true });
 
         res.status(200).json({
             message: "All notifications marked as read",
             success: true,
-            updatedCount
+            updatedCount: notification.updatedCount
         });
     } catch (err) {
         next(err);
@@ -72,24 +65,24 @@ export const markAllNotificationsRead = (req, res, next) => {
 };
 
 // DELETE /api/notifications/:notificationId
-export const deleteNotification = (req, res, next) => {
+export const deleteNotification = async (req, res, next) => {
     try {
         const { notificationId } = req.params;
         const userId = req.user;
 
-        const index = notifications.findIndex(notification => notification.notificationId === notificationId);
+        const notification = await notificationModel.findById(notificationId);
 
-        if (index === -1) return res.status(404).json({
+        if (!notification) return res.status(404).json({
             message: `Notification does not exist with id ${notificationId}`,
             success: false
         });
 
-        if (notifications[index].userId !== userId) return res.status(403).json({
+        if (notification.userId.toString() !== userId) return res.status(403).json({
             message: "You cannot delete another user's notification",
             success: false
         });
 
-        notifications.splice(index, 1);
+        await notification.deleteOne();
 
         res.status(204).send();
     } catch (err) {

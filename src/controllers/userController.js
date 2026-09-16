@@ -1,6 +1,3 @@
-import { users, projects } from "../mockData.js";
-import { sanitizeUser } from "../utils/sanitizeUser.js";
-
 // GET /api/users?search=...
 // Matches fullName, email, or userId. Never returns the current user
 // (you don't invite yourself) or passwords.

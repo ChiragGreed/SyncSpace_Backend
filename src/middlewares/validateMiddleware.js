@@ -131,8 +131,8 @@ export const validateTaskStatus = [
 
 export const validateCreateInvitations = [
     nonEmptyString("projectId", "projectId is required and must be a non-empty string"),
-    body("userIds").isArray({ min: 1 }).withMessage("userIds is required and must be a non-empty array"),
-    body("userIds.*").isString().withMessage("userIds must only contain strings").notEmpty().withMessage("userIds must only contain non-empty strings"),
+    body("receiversId").isArray({ min: 1 }).withMessage("userIds is required and must be a non-empty array"),
+    body("receiversId.*").isString().withMessage("userIds must only contain strings").notEmpty().withMessage("userIds must only contain non-empty strings"),
     handleValidationErrors
 ];
 
