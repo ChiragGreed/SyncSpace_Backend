@@ -2,6 +2,7 @@ import projectModel from "../models/projectModel.js"
 import userModel from "../models/userModel.js"
 import invitationModel from "../models/invitationsModel.js";
 import notificationModel from "../models/notificationModel.js";
+import teamMatesModel from "../models/teammatesModel.js";
 
 // POST /api/invitations
 // Body: { projectId, userIds: [...] }
@@ -143,6 +144,9 @@ export const respondToInvitation = async (req, res, next) => {
             }
 
             await notificationModel.create({ userId: invitation.senderId, message: `${invitation.receiverId?.fullName ?? "Someone"} accepted your invitation to join project: "${project?.title ?? "the project"}"` });
+
+            await teamMatesModel.findOneAndUpdate({ userId: invitation.senderId }, { $addToSet: { recentTeamMates: receiver._id } }, { upsert: true, new: true });
+
         } else {
             await notificationModel.create({ userId: invitation.senderId, message: `${invitation.receiverId?.fullName ?? "Someone"} declined your invitation to join project: "${project?.title ?? "the project"}"` });
         }

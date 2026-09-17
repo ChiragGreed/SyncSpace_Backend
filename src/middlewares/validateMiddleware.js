@@ -69,6 +69,7 @@ export const validateRegister = [
     nonEmptyString('fullName', 'fullName is required and must be a non-empty string'),
     nonEmptyString('email', 'email is required and must be a non-empty string'),
     body('email').isEmail().withMessage('email must be a valid email address'),
+    body("role").notEmpty().withMessage("Role is required").isIn(["user", "admin"]).withMessage("Role must be either user or admin"),
     passwordValidation(true),
     handleValidationErrors
 ];
@@ -97,7 +98,13 @@ export const validateUpdateProject = [
     optionalString('description', 'description must be a string'),
     optionalEnum('status', PROJECT_STATUSES),
     optionalArray('members'),
-    optionalNonEmptyString('dueDate', 'dueDate must be a non-empty string'),
+    body("dueDate").isISO8601({ strict: true }).withMessage("dueDate must be a valid date in YYYY-MM-DD format"),
+    handleValidationErrors
+];
+
+export const validateProjectStatus = [
+    nonEmptyString('status','status is required and must be a non-empty string'),
+    body('status').isIn(PROJECT_STATUSES).withMessage(`status must be one of: ${PROJECT_STATUSES.join(", ")}`),
     handleValidationErrors
 ];
 

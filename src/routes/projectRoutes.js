@@ -1,6 +1,6 @@
 import express from 'express';
 import { createProject, getProjects, getProject, updateProject, deleteProject, updateProjectStatus, getProjectTasks } from '../controllers/projectController.js';
-import { validateCreateProject, validateUpdateProject } from '../middlewares/validateMiddleware.js';
+import { validateCreateProject, validateProjectStatus, validateUpdateProject } from '../middlewares/validateMiddleware.js';
 import { verifyToken } from '../middlewares/authMiddleware.js';
 
 const projectRouter = express.Router();
@@ -15,7 +15,7 @@ projectRouter.post('/', verifyToken, validateCreateProject, createProject);
 
 projectRouter.patch('/:projectId', verifyToken, validateUpdateProject, updateProject);
 
-projectRouter.patch('/:projectId/status', verifyToken, validateUpdateProject, updateProjectStatus);
+projectRouter.patch('/:projectId/status', verifyToken, validateProjectStatus, updateProjectStatus);
 
 projectRouter.delete('/:projectId', verifyToken, deleteProject);
 

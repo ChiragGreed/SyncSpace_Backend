@@ -87,7 +87,7 @@ export const updateProject = async (req, res, next) => {
     try {
         const { projectId } = req.params;
         const userId = req.user;
-        const project = await projectModel.findById(projectId);
+        const project = await prjectModel.findById(projectId);
 
         if (!project) return res.status(404).json({
             message: `Project does not exist with id ${projectId}`,

@@ -1,12 +1,13 @@
 // GET /api/users?search=...
 // Matches fullName, email, or userId. Never returns the current user
+
+import teamMatesModel from "../models/teammatesModel.js";
+import userModel from "../models/userModel.js";
+
 // (you don't invite yourself) or passwords.
-export const searchUsers = (req, res, next) => {
+export const searchUsers = async (req, res, next) => {
     try {
         const { search } = req.query;
-        const currentUserId = req.user;
-
-        let results = users.filter(user => user.userId !== currentUserId);
 
         if (search === '') return res.status(200).json({
             message: "Users fetched successfully",
@@ -14,19 +15,24 @@ export const searchUsers = (req, res, next) => {
             users: null
         });
 
+        let results = [];
+        console.log(req.user);
         if (search) {
-            const term = search.toLowerCase();
-            results = results.filter(user =>
-                user.fullName.toLowerCase().includes(term) ||
-                user.email.toLowerCase().includes(term) ||
-                user.userId.toLowerCase().includes(term)
-            );
+            results = await userModel.find({
+                _id: { $ne: req.user },
+
+                $or: [
+                    { fullName: { $regex: search, $options: "i" } },
+                    { email: { $regex: search, $options: "i" } },
+                    { userId: { $regex: search, $options: "i" } },
+                ],
+            }).select("-password");
         }
 
         res.status(200).json({
             message: "Users fetched successfully",
             success: true,
-            users: results.map(sanitizeUser)
+            users: results
         });
     } catch (err) {
         next(err);
@@ -37,28 +43,21 @@ export const searchUsers = (req, res, next) => {
 // "Recent teammates" = people who already share a project with you — a simple,
 // real-data-backed stand-in for a full activity feed, useful for quick-adding
 // to a new invitation.
-export const getRecentTeammates = (req, res, next) => {
+export const getRecentTeammates = async (req, res, next) => {
     try {
-        const currentUserId = req.user;
+        const userId = req.user;
 
-        const sharedProjects = projects.filter(project => project.members.includes(currentUserId));
+        const recentTeamMates = await teamMatesModel.findOne({ userId }).populate("recentTeamMates");
 
-        const teammateIds = new Set();
-        sharedProjects.forEach(project => {
-            project.members.forEach(memberId => {
-                if (memberId !== currentUserId) teammateIds.add(memberId);
-            });
-        });
-
-        const teammates = users
-            .filter(user => teammateIds.has(user.userId))
-            .slice(0, 10)
-            .map(sanitizeUser);
+        if (!recentTeamMates || recentTeamMates.length < 1) return res.status(200).json({
+            message: "No recent Team mates available",
+            success: true
+        })
 
         res.status(200).json({
             message: "Recent teammates fetched successfully",
             success: true,
-            users: teammates
+            recentTeammates: recentTeamMates
         });
     } catch (err) {
         next(err);

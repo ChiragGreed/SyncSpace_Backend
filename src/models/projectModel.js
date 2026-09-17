@@ -11,12 +11,10 @@ const projectSchema = new mongoose.Schema({
         required: true
     },
     description: {
-        type: String,
-        required: true
+        type: String
     },
     status: {
         type: String,
-        required: true,
         default: "inProgress",
         enum: ["inProgress", "completed"]
     },
