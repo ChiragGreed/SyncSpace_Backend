@@ -1,5 +1,5 @@
 import express from 'express';
-import { createProject, getProjects, getProject, updateProject, deleteProject, updateProjectStatus } from '../controllers/projectController.js';
+import { createProject, getProjects, getProject, updateProject, deleteProject, updateProjectStatus, getProjectTasks } from '../controllers/projectController.js';
 import { validateCreateProject, validateUpdateProject } from '../middlewares/validateMiddleware.js';
 import { verifyToken } from '../middlewares/authMiddleware.js';
 
@@ -8,6 +8,8 @@ const projectRouter = express.Router();
 projectRouter.get('/', verifyToken, getProjects);
 
 projectRouter.get('/:projectId', verifyToken, getProject);
+
+projectRouter.get('/:projectId/task', verifyToken, getProjectTasks);
 
 projectRouter.post('/', verifyToken, validateCreateProject, createProject);
 

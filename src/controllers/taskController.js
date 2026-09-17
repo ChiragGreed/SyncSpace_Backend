@@ -1,4 +1,4 @@
-import taskModel from '../modles/TaskModel.js';
+import taskModel from "../models/taskModel.js";
 
 export const createTask = async (req, res, next) => {
     try {
@@ -22,7 +22,7 @@ export const createTask = async (req, res, next) => {
 export const deleteTask = async (req, res, next) => {
     try {
         const { taskId } = req.params;
-        const taskIndex = await taskModel.findOneAndDelete(taskId);
+        const taskIndex = await taskModel.findOneAndDelete({ _id: taskId });
 
         if (!taskIndex) return res.status(404).json({
             message: "Task do not exist",
@@ -41,7 +41,7 @@ export const getTasks = async (req, res, next) => {
         const userId = req.user;
         const tasks = await taskModel.find({ assignee: userId });
 
-        if (tasks.length < 1) return res.status(200).json({
+        if (!tasks || tasks.length < 1) return res.status(200).json({
             message: "No tasks to show",
             success: true
         })
@@ -51,28 +51,6 @@ export const getTasks = async (req, res, next) => {
             success: true,
             tasks
         });
-    } catch (err) {
-        next(err);
-    }
-}
-
-// Get all tasks from a project
-export const getProjectTasks = async (req, res, next) => {
-    try {
-        const { projectId } = req.params;
-        const tasks = await taskModel.find({ projectId });
-
-        if (!tasks || tasks.length === 0) return res.status(404).json({
-            message: `No tasks found for project with id ${projectId}`,
-            success: false
-        });
-
-        res.status(200).json({
-            message: "Project Tasks fetched successfully",
-            success: true,
-            tasks
-        })
-
     } catch (err) {
         next(err);
     }

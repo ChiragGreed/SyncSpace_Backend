@@ -1,9 +1,7 @@
-import { notifications } from "../mockData.js";
-import crypto from "crypto";
-import projectModel from "../modles/projectModel.js"
-import userModel from "../modles/userModel.js"
-import invitationModel from "../modles/invitationsModel.js";
-import notificationModel from "../modles/notificationModel.js";
+import projectModel from "../models/projectModel.js"
+import userModel from "../models/userModel.js"
+import invitationModel from "../models/invitationsModel.js";
+import notificationModel from "../models/notificationModel.js";
 
 // POST /api/invitations
 // Body: { projectId, userIds: [...] }
@@ -74,7 +72,7 @@ export const getReceivedInvitations = async (req, res, next) => {
         const userId = req.user;
         const received = await invitationModel.find({ receiverId: userId, status: "pending" });
 
-        if (!received) return res.status(200).json({
+        if (!received || received.length < 1) return res.status(200).json({
             message: "No invitations received",
             success: true
         })
@@ -95,7 +93,7 @@ export const getSentInvitations = async (req, res, next) => {
         const userId = req.user;
         const sent = await invitationModel.find({ senderId: userId });
 
-        if (!sent) return res.status(200).json({
+        if (!sent || sent.length < 1) return res.status(200).json({
             message: "No invitations sent",
             success: true
         })

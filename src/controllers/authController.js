@@ -1,6 +1,6 @@
 import JWT from 'jsonwebtoken';
 import { Config } from '../config/config.js';
-import userModel from '../modles/userModel.js';
+import userModel from '../models/userModel.js';
 import bcrypt from 'bcryptjs';
 
 const generateToken = (userId) => {

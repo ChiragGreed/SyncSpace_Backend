@@ -1,4 +1,5 @@
-import projectModel from "../modles/projectModel.js";
+import taskModel from "../models/taskModel.js";
+import projectModel from "../models/projectModel.js";
 
 export const createProject = async (req, res, next) => {
     try {
@@ -25,7 +26,7 @@ export const getProjects = async (req, res, next) => {
 
         const projects = await projectModel.find({ members: userId });
 
-        if (!projects) return res.status(200).json({
+        if (!projects || projects.length === 0) return res.status(200).json({
             message: "No projects to show",
             success: true
         })
@@ -56,6 +57,27 @@ export const getProject = async (req, res, next) => {
             success: true,
             project
         })
+    } catch (err) {
+        next(err);
+    }
+}
+
+export const getProjectTasks = async (req, res, next) => {
+    try {
+        const { projectId } = req.params;
+        const tasks = await taskModel.find({ projectId });
+
+        if (!tasks || tasks.length === 0) return res.status(404).json({
+            message: `No tasks found for project with id ${projectId}`,
+            success: false
+        });
+
+        res.status(200).json({
+            message: "Project Tasks fetched successfully",
+            success: true,
+            tasks
+        })
+
     } catch (err) {
         next(err);
     }

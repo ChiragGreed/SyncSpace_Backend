@@ -1,5 +1,4 @@
-import { notifications } from "../mockData.js";
-import notificationModel from "../modles/notificationModel.js";
+import notificationModel from "../models/notificationModel.js";
 
 // GET /api/notifications
 export const getNotifications = async (req, res, next) => {
