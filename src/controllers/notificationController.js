@@ -1,6 +1,9 @@
 import notificationModel from "../models/notificationModel.js";
 
-// GET /api/notifications
+/**
+ * @route GET /api/notifications/
+ * Return the authenticated user's notifications, newest first.
+ */
 export const getNotifications = async (req, res, next) => {
     try {
         const userId = req.user;
@@ -16,7 +19,10 @@ export const getNotifications = async (req, res, next) => {
     }
 };
 
-// PATCH /api/notifications/:notificationId/read
+/**
+ * @route PATCH /api/notifications/:notificationId/read
+ * Mark one notification as read after verifying it belongs to the user.
+ */
 export const markNotificationRead = async (req, res, next) => {
     try {
         const { notificationId } = req.params;
@@ -47,7 +53,10 @@ export const markNotificationRead = async (req, res, next) => {
     }
 };
 
-// PATCH /api/notifications/read-all
+/**
+ * @route PATCH /api/notifications/read-all
+ * Mark every notification belonging to the authenticated user as read.
+ */
 export const markAllNotificationsRead = async (req, res, next) => {
     try {
         const userId = req.user;
@@ -63,7 +72,10 @@ export const markAllNotificationsRead = async (req, res, next) => {
     }
 };
 
-// DELETE /api/notifications/:notificationId
+/**
+ * @route DELETE /api/notifications/:notificationId
+ * Delete one notification after verifying it belongs to the user.
+ */
 export const deleteNotification = async (req, res, next) => {
     try {
         const { notificationId } = req.params;

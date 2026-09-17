@@ -1,10 +1,10 @@
-// GET /api/users?search=...
-// Matches fullName, email, or userId. Never returns the current user
-
 import teamMatesModel from "../models/teammatesModel.js";
 import userModel from "../models/userModel.js";
 
-// (you don't invite yourself) or passwords.
+/**
+ * @route GET /api/users/?search=...
+ * Search users by name, email, or user ID without returning the current user or passwords.
+ */
 export const searchUsers = async (req, res, next) => {
     try {
         const { search } = req.query;
@@ -39,10 +39,10 @@ export const searchUsers = async (req, res, next) => {
     }
 };
 
-// GET /api/users/recent
-// "Recent teammates" = people who already share a project with you — a simple,
-// real-data-backed stand-in for a full activity feed, useful for quick-adding
-// to a new invitation.
+/**
+ * @route GET /api/users/recent
+ * Return teammates previously associated with the authenticated user's projects.
+ */
 export const getRecentTeammates = async (req, res, next) => {
     try {
         const userId = req.user;

@@ -1,5 +1,9 @@
 import taskModel from "../models/taskModel.js";
 
+/**
+ * @route POST /api/tasks/
+ * Create a task, assigning it to the requested user or the authenticated user by default.
+ */
 export const createTask = async (req, res, next) => {
     try {
         const userId = req.user;
@@ -19,6 +23,10 @@ export const createTask = async (req, res, next) => {
     }
 }
 
+/**
+ * @route DELETE /api/tasks/:taskId
+ * Delete a task by ID.
+ */
 export const deleteTask = async (req, res, next) => {
     try {
         const { taskId } = req.params;
@@ -35,7 +43,10 @@ export const deleteTask = async (req, res, next) => {
     }
 }
 
-// Get all 'your' tasks from all projects
+/**
+ * @route GET /api/tasks/
+ * Return all tasks assigned to the authenticated user.
+ */
 export const getTasks = async (req, res, next) => {
     try {
         const userId = req.user;
@@ -56,7 +67,10 @@ export const getTasks = async (req, res, next) => {
     }
 }
 
-// Get single tasks
+/**
+ * @route GET /api/tasks/:taskId
+ * Return one task by ID.
+ */
 export const getTask = async (req, res, next) => {
     try {
         const { taskId } = req.params;
@@ -78,6 +92,10 @@ export const getTask = async (req, res, next) => {
     }
 }
 
+/**
+ * @route PATCH /api/tasks/:taskId
+ * Update a task when the caller has project-admin or assignee permissions.
+ */
 export const updateTask = async (req, res, next) => {
     try {
 
@@ -122,6 +140,10 @@ export const updateTask = async (req, res, next) => {
     }
 }
 
+/**
+ * @route PATCH /api/tasks/:taskId/status
+ * Update a task's status when the authenticated user is its assignee.
+ */
 export const updateTaskStatus = async (req, res, next) => {
     try {
         const userId = req.user;

@@ -1,592 +1,78 @@
-# Task 2 — Backend REST API
+# Innovation Hacks — Task 3
 
-An Express.js backend for managing users, projects, tasks, team invitations, and notifications.
+## Database Integration — Users, Projects & Tasks API
 
-This task focuses on building and structuring REST APIs with JWT authentication, request validation, centralized error handling, CRUD operations, and a mock in-memory data layer.
+A RESTful backend API built with **Node.js, Express.js, MongoDB and Mongoose** as part of the Innovation Hacks Full Stack Development Internship.
 
-## Features
+This project extends the backend developed in Task 2 by replacing in-memory data with a **persistent MongoDB database**, adding Mongoose schemas, relationships, validation, authentication, project management, task management, invitations and notifications.
+
+---
+
+## 🚀 Features
 
 - User registration and login
 - JWT-based authentication using HTTP cookies
-- Authenticated user profile
-- User search and recent teammates
-- CRUD operations for projects
-- CRUD operations for tasks
-- Dedicated task status update endpoint
-- Project team management through invitations
-- Send invitations to multiple users
-- Accept or reject project invitations
-- In-app notifications for invitation events
-- Mark individual notifications as read
-- Mark all notifications as read
-- Delete notifications
-- Request validation using `express-validator`
-- 404 handling for unknown routes
+- Password hashing with bcrypt
+- MongoDB database integration using Mongoose
+- User search
+- Recent teammates system
+- Project creation and management
+- Project member management
+- Task creation and management
+- Task status and priority management
+- Project invitations
+- Accept/reject invitation flow
+- In-app notifications
+- Request validation using Express Validator
+- Mongoose schema validation
 - Centralized error handling
-- Mock, in-memory data for users, projects, tasks, invitations, and notifications
-- UUID-based IDs for newly created resources
+- Protected API routes
+- Role-based project administration
+- Persistent data storage
 
-## Tech Stack
+---
+
+## 🛠️ Tech Stack
+
+### Backend
 
 - Node.js
-- Express.js 5
-- JSON Web Token (`jsonwebtoken`)
-- Cookie Parser (`cookie-parser`)
-- Dotenv (`dotenv`)
-- Express Validator (`express-validator`)
+- Express.js
+- MongoDB
+- Mongoose
+- JavaScript (ES Modules)
 
-## API Documentation
+### Authentication & Security
 
-The server runs at:
+- JSON Web Tokens (JWT)
+- bcryptjs
+- HTTP cookies
+- dotenv
 
-`http://localhost:5000`
+### Validation & Utilities
 
-All protected endpoints require a valid JWT stored in the `Access_Token` HTTP cookie.
-
----
-
-# Authentication
-
-## `POST /api/auth/register`
-
-Registers a new user and sets an authentication cookie.
-
-**Authentication:** Not required
-
-### Request Body
-
-```json
-{
-  "fullName": "Alex Morgan",
-  "email": "alex@example.com",
-  "password": "StrongPass1!",
-  "role": "Developer"
-}
-```
-
-### Validation
-
-- `fullName` is required
-- `email` must be valid
-- `password` must be 6–20 characters with no whitespace
-- Password complexity requirements are applied
-- `role` is optional
+- express-validator
+- cookie-parser
+- centralized error handling
 
 ---
 
-## `POST /api/auth/login`
-
-Authenticates an existing user and sets an `Access_Token` cookie containing a JWT valid for one day.
-
-**Authentication:** Not required
-
-### Request Body
-
-```json
-{
-  "email": "alex@example.com",
-  "password": "StrongPass1!"
-}
-```
-
----
-
-## `GET /api/auth/`
-
-Returns the authenticated user's profile without exposing the password.
-
-**Authentication:** Required
-
-**Body:** None
-
----
-
-# Users
-
-All user endpoints require authentication.
-
-## `GET /api/users`
-
-Searches for users by name, email, or user ID.
-
-**Authentication:** Required
-
-### Query Parameter
+# 📁 Project Structure
 
 ```text
-?search=alex
-```
-
-### Example
-
-```http
-GET /api/users?search=alex
-```
-
-The authenticated user is excluded from the search results.
-
----
-
-## `GET /api/users/recent`
-
-Returns recent teammates based on users who share projects with the authenticated user.
-
-**Authentication:** Required
-
-**Body:** None
-
----
-
-# Projects
-
-All project endpoints require authentication.
-
-## `GET /api/projects`
-
-Returns all projects.
-
-**Authentication:** Required
-
-**Body:** None
-
----
-
-## `GET /api/projects/:projectId`
-
-Returns a project by its ID.
-
-**Authentication:** Required
-
-**Body:** None
-
----
-
-## `POST /api/projects`
-
-Creates a new project.
-
-**Authentication:** Required
-
-### Request Body
-
-```json
-{
-  "title": "Website Redesign",
-  "description": "Refresh the company website",
-  "status": "inProgress",
-  "dueDate": "Dec 15"
-}
-```
-
-### Fields
-
-- `title` — required
-- `description` — optional
-- `status` — optional
-- `dueDate` — optional
-
-Valid project statuses:
-
-- `toDo`
-- `inProgress`
-- `completed`
-
-Default status:
-
-```text
-inProgress
-```
-
-### Project Membership
-
-The creator is automatically added as the first project member.
-
-For example:
-
-```json
-{
-  "members": ["creator-user-id"]
-}
-```
-
-Other users are **not added directly during project creation**.
-
-To add teammates, use the invitation API. Selected teammates receive pending invitations and only become project members after accepting the invitation.
-
----
-
-## `PATCH /api/projects/:projectId`
-
-Updates one or more fields of an existing project.
-
-**Authentication:** Required
-
-### Request Body
-
-```json
-{
-  "status": "completed",
-  "description": "Redesign approved"
-}
-```
-
-Supported fields:
-
-- `title`
-- `description`
-- `status`
-- `dueDate`
-- `members`
-
-The request body must contain at least one field.
-
-> Team members should normally be added through the invitation flow rather than directly modifying the `members` array.
-
----
-
-## `DELETE /api/projects/:projectId`
-
-Deletes a project.
-
-**Authentication:** Required
-
-**Body:** None
-
-### Success Response
-
-`204 No Content`
-
----
-
-# Tasks
-
-All task endpoints require authentication.
-
-## `GET /api/tasks`
-
-Returns all tasks.
-
-**Authentication:** Required
-
-**Body:** None
-
----
-
-## `GET /api/tasks/:taskId`
-
-Returns a task by its ID.
-
-**Authentication:** Required
-
-**Body:** None
-
----
-
-## `POST /api/tasks`
-
-Creates a new task. Tasks can optionally be associated with a project.
-
-**Authentication:** Required
-
-### Request Body
-
-```json
-{
-  "title": "Implement Login Form",
-  "projectId": "project-uuid",
-  "description": "Add client-side login fields",
-  "status": "toDo",
-  "priority": "high"
-}
-```
-
-### Fields
-
-- `title` — required
-- `projectId` — optional
-- `description` — optional
-- `status` — optional
-- `priority` — optional
-
-Valid statuses:
-
-- `toDo`
-- `inProgress`
-- `completed`
-
-Valid priorities:
-
-- `low`
-- `medium`
-- `high`
-
-Defaults:
-
-- Status: `toDo`
-- Priority: `medium`
-
----
-
-## `PATCH /api/tasks/:taskId`
-
-Updates one or more fields of an existing task.
-
-**Authentication:** Required
-
-### Request Body
-
-```json
-{
-  "priority": "medium",
-  "description": "Add validation and error messages"
-}
-```
-
-Supported fields:
-
-- `title`
-- `projectId`
-- `description`
-- `status`
-- `priority`
-
-The request body must contain at least one field.
-
----
-
-## `PATCH /api/tasks/:taskId/status`
-
-Updates only the status of a task.
-
-**Authentication:** Required
-
-### Request Body
-
-```json
-{
-  "status": "inProgress"
-}
-```
-
-Valid statuses:
-
-- `toDo`
-- `inProgress`
-- `completed`
-
----
-
-## `DELETE /api/tasks/:taskId`
-
-Deletes a task.
-
-**Authentication:** Required
-
-**Body:** None
-
-### Success Response
-
-`204 No Content`
-
----
-
-# Invitations
-
-The invitation system is used to add teammates to projects.
-
-A user who creates a project automatically becomes a member. Other users are added only after accepting an invitation.
-
-## Invitation Flow
-
-```text
-Create Project
-      ↓
-Creator automatically becomes a member
-      ↓
-Invite teammates
-      ↓
-Invitation status: pending
-      ↓
- ┌────┴────┐
- ↓         ↓
-Accept   Reject
- ↓         ↓
-Member   No change
-```
-
-## `POST /api/invitations`
-
-Sends project invitations to one or more users.
-
-**Authentication:** Required
-
-### Request Body
-
-```json
-{
-  "projectId": "project-uuid",
-  "userIds": [
-    "user-uuid-1",
-    "user-uuid-2"
-  ]
-}
-```
-
-The authenticated user must already be a member of the project.
-
-Users who are already members, do not exist, or already have a pending invitation are skipped.
-
----
-
-## `GET /api/invitations/received`
-
-Returns invitations received by the authenticated user.
-
-**Authentication:** Required
-
-**Body:** None
-
----
-
-## `GET /api/invitations/sent`
-
-Returns invitations sent by the authenticated user.
-
-**Authentication:** Required
-
-**Body:** None
-
----
-
-## `PATCH /api/invitations/:invitationId`
-
-Accepts or rejects a received invitation.
-
-**Authentication:** Required
-
-### Request Body
-
-```json
-{
-  "status": "accepted"
-}
-```
-
-Valid statuses:
-
-- `accepted`
-- `rejected`
-
-When an invitation is accepted, the receiver is added to the project's `members` array.
-
-When an invitation is rejected, the project membership remains unchanged.
-
----
-
-# Notifications
-
-Notifications are created for important invitation events.
-
-All notification endpoints require authentication.
-
-## `GET /api/notifications`
-
-Returns notifications belonging to the authenticated user.
-
-**Authentication:** Required
-
-**Body:** None
-
-Notifications are returned with the newest notifications first.
-
----
-
-## `PATCH /api/notifications/:notificationId/read`
-
-Marks a notification as read.
-
-**Authentication:** Required
-
-**Body:** None
-
----
-
-## `PATCH /api/notifications/read-all`
-
-Marks all unread notifications belonging to the authenticated user as read.
-
-**Authentication:** Required
-
-**Body:** None
-
----
-
-## `DELETE /api/notifications/:notificationId`
-
-Deletes a notification belonging to the authenticated user.
-
-**Authentication:** Required
-
-**Body:** None
-
-### Success Response
-
-`204 No Content`
-
----
-
-# Validation and Error Handling
-
-The API uses `express-validator` to validate incoming request data.
-
-Validation errors return a `400 Bad Request` response.
-
-Example:
-
-```json
-{
-  "message": "Validation failed",
-  "success": false,
-  "errors": [
-    "title is required and must be a non-empty string"
-  ]
-}
-```
-
-The API also handles:
-
-- `400` — Invalid request data
-- `401` — Missing or invalid authentication
-- `403` — Authenticated user does not have permission
-- `404` — Resource or route not found
-- `500` — Unexpected server errors
-
-Unknown routes are handled by centralized 404 middleware, while unexpected errors are handled by centralized error middleware.
-
-Successful responses generally include:
-
-```json
-{
-  "success": true
-}
-```
-
-along with an appropriate message and the requested resource or collection.
-
-Passwords are removed from user responses.
-
----
-
-# Project Structure
-
-```text
-.
+Innovation_Hack_Task_03/
+│
 ├── server.js
 ├── package.json
+├── package-lock.json
+├── .env
+│
 └── src/
     ├── app.js
-    ├── config.js
-    ├── mockData.js
+    │
+    ├── config/
+    │   ├── config.js
+    │   └── database.js
     │
     ├── controllers/
     │   ├── authController.js
@@ -601,13 +87,21 @@ Passwords are removed from user responses.
     │   ├── errorMiddleware.js
     │   └── validateMiddleware.js
     │
+    ├── models/
+    │   ├── userModel.js
+    │   ├── projectModel.js
+    │   ├── taskModel.js
+    │   ├── invitationsModel.js
+    │   ├── notificationModel.js
+    │   └── teammatesModel.js
+    │
     ├── routes/
     │   ├── authRoutes.js
-    │   ├── invitationRoutes.js
-    │   ├── notificationRoutes.js
+    │   ├── userRoutes.js
     │   ├── projectRoutes.js
     │   ├── taskRoutes.js
-    │   └── userRoutes.js
+    │   ├── invitationRoutes.js
+    │   └── notificationRoutes.js
     │
     └── utils/
         └── sanitizeUser.js
@@ -615,34 +109,764 @@ Passwords are removed from user responses.
 
 ---
 
-# Running Locally
+# 🗄️ Database Integration
 
-## Prerequisites
+Task 2 used in-memory JavaScript arrays for storing application data.
 
-- Node.js
-- npm
+In Task 3, the data layer was migrated to **MongoDB using Mongoose**.
 
-## Installation
+### Architecture
 
-Clone the repository and install the dependencies:
+```text
+Frontend
+   │
+   ▼
+Express REST API
+   │
+   ▼
+Controllers
+   │
+   ▼
+Mongoose Models
+   │
+   ▼
+MongoDB
+```
+
+Data now persists even after the server is restarted.
+
+---
+
+# 📊 Data Models
+
+The application currently uses the following MongoDB collections:
+
+### User
+
+Stores user account information.
+
+```text
+User
+├── fullName
+├── email
+├── password
+└── role
+```
+
+Passwords are hashed using bcrypt before being stored.
+
+---
+
+### Project
+
+```text
+Project
+├── admin → User
+├── title
+├── description
+├── status
+├── members → Users
+└── dueDate
+```
+
+The user who creates a project is automatically added as a project member and becomes the project admin.
+
+---
+
+### Task
+
+```text
+Task
+├── assignee → User
+├── title
+├── description
+├── projectId → Project
+├── status
+└── priority
+```
+
+Tasks can either belong to a project or exist as individual tasks.
+
+---
+
+### Invitation
+
+```text
+Invitation
+├── projectId → Project
+├── senderId → User
+├── receiverId → User
+└── status
+```
+
+Invitation status can be:
+
+```text
+pending
+accepted
+rejected
+```
+
+---
+
+### Notification
+
+```text
+Notification
+├── userId → User
+├── message
+├── isRead
+└── timestamps
+```
+
+Notifications are generated for invitation-related events.
+
+---
+
+### Recent Teammates
+
+```text
+TeamMates
+├── userId → User
+└── recentTeamMates → Users
+```
+
+This allows users who have previously worked together to be suggested when inviting teammates to another project.
+
+---
+
+# 🔐 Authentication
+
+Authentication is implemented using **JWT**.
+
+After successful registration or login, the server generates a JWT and stores it in an HTTP cookie:
+
+```text
+Access_Token
+```
+
+Protected routes use the authentication middleware to verify the token before allowing access.
+
+---
+
+# 🔑 API Documentation
+
+Base URL:
+
+```text
+http://localhost:5000
+```
+
+All endpoints requiring authentication expect a valid `Access_Token` cookie.
+
+---
+
+# 👤 Authentication APIs
+
+## `POST /api/auth/register`
+
+Registers a new user.
+
+### Request Body
+
+```json
+{
+  "fullName": "Alex Morgan",
+  "email": "alex@example.com",
+  "password": "StrongPass1!",
+  "role": "user"
+}
+```
+
+### Required Fields
+
+- `fullName`
+- `email`
+- `password`
+- `role`
+
+The password is hashed using bcrypt before being stored in MongoDB.
+
+---
+
+## `POST /api/auth/login`
+
+Logs an existing user in.
+
+### Request Body
+
+```json
+{
+  "email": "alex@example.com",
+  "password": "StrongPass1!"
+}
+```
+
+On successful login, an authentication cookie is created.
+
+---
+
+## `GET /api/auth/`
+
+Returns the currently authenticated user.
+
+**Authentication:** Required
+
+---
+
+# 👥 User APIs
+
+All user endpoints require authentication.
+
+## `GET /api/users?search=`
+
+Searches for users by:
+
+- Full name
+- Email
+- User ID
+
+The currently authenticated user is excluded from the results.
+
+### Example
+
+```text
+GET /api/users?search=alex
+```
+
+---
+
+## `GET /api/users/recent`
+
+Returns recent teammates associated with the authenticated user.
+
+**Authentication:** Required
+
+These users can be used as suggestions when inviting teammates to a project.
+
+---
+
+# 📁 Project APIs
+
+All project endpoints require authentication.
+
+## `GET /api/projects`
+
+Returns projects where the authenticated user is a member.
+
+---
+
+## `GET /api/projects/:projectId`
+
+Returns a project by its MongoDB ObjectId.
+
+### Example
+
+```text
+GET /api/projects/66a123456789abcdef123456
+```
+
+---
+
+## `GET /api/projects/:projectId/task`
+
+Returns tasks associated with a project.
+
+---
+
+## `POST /api/projects`
+
+Creates a new project.
+
+### Request Body
+
+```json
+{
+  "title": "Website Redesign",
+  "description": "Redesign the company website",
+  "status": "inProgress",
+  "dueDate": "2026-09-15"
+}
+```
+
+### Project Status
+
+```text
+inProgress
+completed
+```
+
+The creator is automatically added to the project's `members` array.
+
+---
+
+## `PATCH /api/projects/:projectId`
+
+Updates an existing project.
+
+### Example Request Body
+
+```json
+{
+  "title": "Website Redesign v2",
+  "description": "Updated project requirements"
+}
+```
+
+Supported fields include:
+
+- `title`
+- `description`
+- `status`
+- `members`
+- `dueDate`
+
+Only the project admin can update project information.
+
+---
+
+## `PATCH /api/projects/:projectId/status`
+
+Updates the project status.
+
+### Request Body
+
+```json
+{
+  "status": "completed"
+}
+```
+
+Valid statuses:
+
+```text
+inProgress
+completed
+```
+
+---
+
+## `DELETE /api/projects/:projectId`
+
+Deletes a project.
+
+Only the project admin can delete the project.
+
+### Response
+
+```text
+204 No Content
+```
+
+---
+
+# ✅ Task APIs
+
+All task endpoints require authentication.
+
+## `GET /api/tasks`
+
+Returns tasks assigned to the authenticated user.
+
+---
+
+## `GET /api/tasks/:taskId`
+
+Returns a specific task by its MongoDB ObjectId.
+
+---
+
+## `POST /api/tasks`
+
+Creates a new task.
+
+### Request Body
+
+```json
+{
+  "title": "Implement Login",
+  "description": "Create the login API",
+  "projectId": "66a123456789abcdef123456",
+  "status": "toDo",
+  "priority": "high"
+}
+```
+
+### Fields
+
+| Field | Required | Description |
+|---|---|---|
+| `title` | Yes | Task title |
+| `description` | No | Task description |
+| `projectId` | No | Project associated with the task |
+| `status` | No | Current task status |
+| `priority` | No | Task priority |
+| `assignee` | No | User assigned to the task |
+
+If no assignee is provided, the authenticated user is used.
+
+### Task Status
+
+```text
+toDo
+inProgress
+completed
+```
+
+### Task Priority
+
+```text
+low
+medium
+high
+```
+
+Defaults:
+
+```text
+status   → toDo
+priority → medium
+```
+
+---
+
+## `PATCH /api/tasks/:taskId`
+
+Updates an existing task.
+
+### Example
+
+```json
+{
+  "description": "Add validation and error handling",
+  "priority": "medium"
+}
+```
+
+Supported fields:
+
+- `title`
+- `description`
+- `projectId`
+- `status`
+- `priority`
+
+---
+
+## `PATCH /api/tasks/:taskId/status`
+
+Updates only the task status.
+
+### Request Body
+
+```json
+{
+  "status": "inProgress"
+}
+```
+
+Valid statuses:
+
+```text
+toDo
+inProgress
+completed
+```
+
+---
+
+## `DELETE /api/tasks/:taskId`
+
+Deletes a task.
+
+### Response
+
+```text
+204 No Content
+```
+
+---
+
+# 🤝 Invitation APIs
+
+The invitation system allows users to invite teammates to projects.
+
+### Invitation Flow
+
+```text
+Create Project
+      │
+      ▼
+Creator becomes project member
+      │
+      ▼
+Invite teammate
+      │
+      ▼
+Invitation created
+      │
+      ▼
+Notification sent
+      │
+      ├───────────────┐
+      ▼               ▼
+   Accept           Reject
+      │               │
+      ▼               ▼
+Added to project   No membership change
+```
+
+---
+
+## `POST /api/invitations`
+
+Sends invitations to one or more users.
+
+### Request Body
+
+```json
+{
+  "projectId": "66a123456789abcdef123456",
+  "receiversId": [
+    "66b123456789abcdef123456",
+    "66c123456789abcdef123456"
+  ]
+}
+```
+
+Only existing project members can send invitations.
+
+The API skips users who:
+
+- Do not exist
+- Are already project members
+- Are the sender themselves
+- Already have a pending invitation
+
+---
+
+## `GET /api/invitations/received`
+
+Returns pending invitations received by the authenticated user.
+
+---
+
+## `GET /api/invitations/sent`
+
+Returns invitations sent by the authenticated user.
+
+---
+
+## `PATCH /api/invitations/:invitationId`
+
+Accepts or rejects an invitation.
+
+### Request Body
+
+```json
+{
+  "status": "accepted"
+}
+```
+
+Valid values:
+
+```text
+accepted
+rejected
+```
+
+When accepted:
+
+- The receiver is added to the project
+- The sender receives a notification
+- The teammate is stored in the sender's recent teammates
+
+When rejected:
+
+- The receiver is not added to the project
+- The sender receives a notification
+
+---
+
+# 🔔 Notification APIs
+
+All notification endpoints require authentication.
+
+## `GET /api/notifications`
+
+Returns notifications belonging to the authenticated user.
+
+Notifications are sorted with the newest first.
+
+---
+
+## `PATCH /api/notifications/:notificationId/read`
+
+Marks a notification as read.
+
+---
+
+## `PATCH /api/notifications/read-all`
+
+Marks all notifications belonging to the authenticated user as read.
+
+---
+
+## `DELETE /api/notifications/:notificationId`
+
+Deletes a notification.
+
+### Response
+
+```text
+204 No Content
+```
+
+Users can only modify or delete their own notifications.
+
+---
+
+# ✅ Validation
+
+The API uses **express-validator** for request-level validation.
+
+Mongoose also provides schema-level validation before data is stored in MongoDB.
+
+Validation covers:
+
+- Required fields
+- Email format
+- Password requirements
+- Enum values
+- String values
+- Arrays
+- Project status
+- Task status
+- Task priority
+- Invitation status
+- Date format
+- Empty request bodies
+
+Example validation response:
+
+```json
+{
+  "message": "Validation failed",
+  "success": false,
+  "errors": [
+    "title is required and must be a non-empty string"
+  ]
+}
+```
+
+Invalid request data returns:
+
+```text
+400 Bad Request
+```
+
+---
+
+# ⚠️ Error Handling
+
+The application uses centralized error handling middleware.
+
+Common HTTP status codes:
+
+| Status | Meaning |
+|---|---|
+| `200` | Successful request |
+| `201` | Resource created |
+| `204` | Resource deleted successfully |
+| `400` | Invalid request or validation error |
+| `401` | Authentication required/invalid |
+| `403` | User does not have permission |
+| `404` | Resource or route not found |
+| `500` | Unexpected server error |
+
+Unknown routes are handled by a centralized `404` handler.
+
+---
+
+# 🔒 Security
+
+The application includes several security-related practices:
+
+- Password hashing using bcrypt
+- JWT authentication
+- Protected API routes
+- Environment variables for secrets
+- Password exclusion from user queries/responses
+- User-specific notification access
+- Project admin authorization
+- Input validation before database operations
+
+Never commit real credentials or secrets to GitHub.
+
+---
+
+# ⚙️ Environment Variables
+
+Create a `.env` file in the project root.
+
+```env
+JWT_SECRET=your_jwt_secret
+MONGO_URI=your_mongodb_connection_string
+```
+
+### Variables
+
+| Variable | Description |
+|---|---|
+| `JWT_SECRET` | Secret key used to sign JWT tokens |
+| `MONGO_URI` | MongoDB connection string |
+
+### Example `.env.example`
+
+```env
+JWT_SECRET=replace-with-a-secure-secret
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/database-name
+```
+
+---
+
+# 🚀 Running the Project Locally
+
+## 1. Clone the repository
+
+```bash
+git clone <your-repository-url>
+```
+
+## 2. Navigate into the project
+
+```bash
+cd Innovation_Hack_Task_03
+```
+
+## 3. Install dependencies
 
 ```bash
 npm install
 ```
 
-Create a `.env` file in the project root:
+## 4. Configure environment variables
+
+Create a `.env` file:
 
 ```env
-JWT_SECRET=your-secret-key
+JWT_SECRET=your_jwt_secret
+MONGO_URI=your_mongodb_connection_string
 ```
 
-Start the development server:
+## 5. Start the server
 
 ```bash
 npm run dev
 ```
 
-The API will be available at:
+The server will start on:
 
 ```text
 http://localhost:5000
@@ -650,122 +874,103 @@ http://localhost:5000
 
 ---
 
-# Environment Variables
+# 📦 Available Dependencies
 
-The application currently requires the following environment variable:
+Main dependencies used in this project:
 
-| Variable | Description |
-|----------|-------------|
-| `JWT_SECRET` | Secret used to sign and verify JWT authentication tokens |
+- Express
+- Mongoose
+- bcryptjs
+- jsonwebtoken
+- express-validator
+- cookie-parser
+- dotenv
 
-## `.env.example`
+---
 
-```env
-JWT_SECRET=replace-with-a-long-random-secret
+# 🧪 API Testing
+
+The API can be tested using tools such as:
+
+- Postman
+- Thunder Client
+- Insomnia
+
+Recommended testing flow:
+
+```text
+Register
+   ↓
+Login
+   ↓
+Create Project
+   ↓
+Create Task
+   ↓
+Search Users
+   ↓
+Send Invitation
+   ↓
+Accept / Reject Invitation
+   ↓
+Check Notifications
+   ↓
+Update Project / Task
+   ↓
+Delete Resources
 ```
 
-Never commit your actual `.env` file or real secrets to GitHub.
-
 ---
 
-# Example Authentication Request
+# 🔄 Task Progression
 
-Register a user:
+This project is part of a full-stack development journey.
 
-```bash
-curl -i -c cookies.txt -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"fullName":"Alex Morgan","email":"alex@example.com","password":"StrongPass1!","role":"Developer"}'
+```text
+Task 1
+Developer Productivity Dashboard
+        │
+        ▼
+Task 2
+REST API Development
+        │
+        ▼
+Task 3
+MongoDB Database Integration
+        │
+        ▼
+Task 4
+AI-Powered Full-Stack Platform
 ```
 
-The authentication cookie can then be used for protected requests:
+### Task 3 Focus
 
-```bash
-curl -i -b cookies.txt http://localhost:5000/api/auth/
-```
+The primary goal of this task was to move from temporary in-memory data to a real persistent database.
 
----
+### Task 3 includes:
 
-# Example Project and Invitation Flow
-
-Create a project:
-
-```bash
-curl -i -b cookies.txt -X POST http://localhost:5000/api/projects \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Website Redesign",
-    "description": "Refresh the company website",
-    "status": "inProgress",
-    "dueDate": "Dec 15"
-  }'
-```
-
-The creator is automatically added as a member.
-
-After receiving the newly created `projectId`, teammates can be invited:
-
-```bash
-curl -i -b cookies.txt -X POST http://localhost:5000/api/invitations \
-  -H "Content-Type: application/json" \
-  -d '{
-    "projectId": "project-uuid",
-    "userIds": ["user-uuid-1", "user-uuid-2"]
-  }'
-```
-
-The invited users receive pending invitations and notifications.
+- MongoDB integration
+- Mongoose models
+- Database relationships
+- Persistent users
+- Persistent projects
+- Persistent tasks
+- Persistent invitations
+- Persistent notifications
+- Schema validation
+- Database-backed CRUD operations
 
 ---
 
-# Current Data Model
+# 🎯 Internship Task
 
-The current implementation uses mock, in-memory arrays from `src/mockData.js` for:
-
-- Users
-- Projects
-- Tasks
-- Invitations
-- Notifications
-
-This means:
-
-- Data is stored only while the server is running
-- Data is lost when the server restarts
-- No external database is currently used
-
-Database integration will be introduced in the next task to make the data persistent.
+**Program:** Innovation Hacks — Full Stack Development Internship  
+**Task:** Task 3 — Database Integration  
+**Backend:** Node.js + Express.js  
+**Database:** MongoDB + Mongoose
 
 ---
 
-# Task 2 Deliverables
+# 🎥 Demo
 
-- REST API implementation
-- JWT authentication
-- Request validation
-- Centralized error handling
-- Project and task CRUD APIs
-- User management APIs
-- Team invitation system
-- Notification system
-- API documentation
-- GitHub repository
-- Demo video
-
----
-
-# Demo
-
-Demo Video: **[Add demo video link here]**
-
----
-
-# Future Improvements
-
-- Integrate a persistent database
-- Replace in-memory data with database models
-- Add database relationships and references
-- Improve authorization across project and task resources
-- Add password hashing and stronger authentication security
-- Add additional project and team management functionality
-- Build the final AI-powered project and task management platform
+Demo Video: **[Adding soon]**

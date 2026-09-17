@@ -11,6 +11,10 @@ const generateToken = (userId) => {
     );
 }
 
+/**
+ * @route POST /api/auth/register
+ * Register a new user, issue an access token, and return the created user.
+ */
 export const register = async (req, res, next) => {
     try {
         const { fullName, email, role, password } = req.body;
@@ -38,6 +42,10 @@ export const register = async (req, res, next) => {
     }
 }
 
+/**
+ * @route POST /api/auth/login
+ * Authenticate a user with email and password, then issue an access token.
+ */
 export const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
@@ -70,6 +78,10 @@ export const login = async (req, res, next) => {
     }
 }
 
+/**
+ * @route GET /api/auth/
+ * Return the authenticated user's profile using the ID set by auth middleware.
+ */
 export const getMe = async (req, res, next) => {
     try {
 

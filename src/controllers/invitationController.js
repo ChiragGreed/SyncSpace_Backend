@@ -4,10 +4,12 @@ import invitationModel from "../models/invitationsModel.js";
 import notificationModel from "../models/notificationModel.js";
 import teamMatesModel from "../models/teammatesModel.js";
 
-// POST /api/invitations
-// Body: { projectId, userIds: [...] }
-// Only an existing project member can invite others. Invalid targets in the
-// batch (nonexistent user, self, already a member, duplicate pending invite) are skipped individually rather than failing the whole request.
+/**
+ * @route POST /api/invitations
+ * Create invitations for eligible users and notify each new recipient.
+ * Existing project members may invite others; invalid recipients are reported
+ * in the skipped list so one invalid entry does not fail the whole request.
+ */
 export const createInvitations = async (req, res, next) => {
     try {
         const senderId = req.user;
@@ -67,7 +69,10 @@ export const createInvitations = async (req, res, next) => {
     }
 };
 
-// GET /api/invitations/received
+/**
+ * @route GET /api/invitations/received
+ * Return the authenticated user's pending received invitations.
+ */
 export const getReceivedInvitations = async (req, res, next) => {
     try {
         const userId = req.user;
@@ -88,7 +93,10 @@ export const getReceivedInvitations = async (req, res, next) => {
     }
 };
 
-// GET /api/invitations/sent
+/**
+ * @route GET /api/invitations/sent
+ * Return all invitations sent by the authenticated user.
+ */
 export const getSentInvitations = async (req, res, next) => {
     try {
         const userId = req.user;
@@ -109,9 +117,11 @@ export const getSentInvitations = async (req, res, next) => {
     }
 };
 
-// PATCH /api/invitations/:invitationId
-// Body: { status: "accepted" | "rejected" }
-// Only the receiver can respond, and only while the invitation is still pending.
+/**
+ * @route PATCH /api/invitations/:invitationId
+ * Accept or reject a pending invitation owned by the authenticated receiver.
+ * Acceptance adds the user to the project and records a recent teammate.
+ */
 export const respondToInvitation = async (req, res, next) => {
     try {
         const { invitationId } = req.params;

@@ -1,6 +1,10 @@
 import taskModel from "../models/taskModel.js";
 import projectModel from "../models/projectModel.js";
 
+/**
+ * @route POST /api/projects/
+ * Create a project owned by the authenticated user and add that user as a member.
+ */
 export const createProject = async (req, res, next) => {
     try {
         const userId = req.user;
@@ -20,6 +24,10 @@ export const createProject = async (req, res, next) => {
     }
 }
 
+/**
+ * @route GET /api/projects/
+ * Return all projects that include the authenticated user as a member.
+ */
 export const getProjects = async (req, res, next) => {
     try {
         const userId = req.user;
@@ -41,6 +49,10 @@ export const getProjects = async (req, res, next) => {
     }
 }
 
+/**
+ * @route GET /api/projects/:projectId
+ * Return one project by ID.
+ */
 export const getProject = async (req, res, next) => {
     try {
         const { projectId } = req.params;
@@ -62,6 +74,10 @@ export const getProject = async (req, res, next) => {
     }
 }
 
+/**
+ * @route GET /api/projects/:projectId/task
+ * Return all tasks associated with a project.
+ */
 export const getProjectTasks = async (req, res, next) => {
     try {
         const { projectId } = req.params;
@@ -83,6 +99,10 @@ export const getProjectTasks = async (req, res, next) => {
     }
 }
 
+/**
+ * @route PATCH /api/projects/:projectId
+ * Update project fields when the authenticated user is the project admin.
+ */
 export const updateProject = async (req, res, next) => {
     try {
         const { projectId } = req.params;
@@ -113,6 +133,10 @@ export const updateProject = async (req, res, next) => {
     }
 }
 
+/**
+ * @route PATCH /api/projects/:projectId/status
+ * Update a project's status when the authenticated user is the project admin.
+ */
 export const updateProjectStatus = async (req, res, next) => {
     try {
         const { projectId } = req.params;
@@ -145,6 +169,10 @@ export const updateProjectStatus = async (req, res, next) => {
     }
 }
 
+/**
+ * @route DELETE /api/projects/:projectId
+ * Delete a project when the authenticated user is the project admin.
+ */
 export const deleteProject = async (req, res, next) => {
     try {
         const userId = req.user;
