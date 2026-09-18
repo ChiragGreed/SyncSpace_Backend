@@ -1,4 +1,5 @@
 import taskModel from "../models/taskModel.js";
+import projectModel from "../models/projectModel.js";
 
 /**
  * @route POST /api/tasks/
@@ -11,6 +12,15 @@ export const createTask = async (req, res, next) => {
         // projectId is optional in task creation, to create individual tasks separate from any project.
         const { title, projectId, description, status, priority, assignee = userId } = req.body;
 
+        if (projectId) {
+            const project = await projectModel.findById(projectId);
+
+            if (!project) return res.status(404).json({
+                message: `Project does not exist with id ${projectId}`,
+                success: false
+            })
+        }
+        
         const task = await taskModel.create({ title, description, projectId, assignee, status, priority });
 
         res.status(201).json({
@@ -103,7 +113,8 @@ export const updateTask = async (req, res, next) => {
         const userId = req.user;
 
         const existingTask = await taskModel.findOne({ _id: taskId }).populate("projectId");
-        const project = existingTask.projectId;
+        console.log(existingTask);
+        const project = existingTask?.projectId;
 
         if (!existingTask) return res.status(404).json({
             message: `Task do not exist with ${taskId}`,

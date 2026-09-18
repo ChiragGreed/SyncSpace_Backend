@@ -38,6 +38,10 @@ const optionalArray = (field) => body(field)
     .optional()
     .isArray().withMessage(`${field} must be an array`);
 
+const optionalDate = (field) => body(field)
+    .optional()
+    .isISO8601({ strict: true }).withMessage(`${field} must be a valid date in YYYY-MM-DD format`);
+
 const passwordValidation = (requireComplexity = false) => {
     const validation = body('password')
         .isString().withMessage('password must be a string')
@@ -98,7 +102,7 @@ export const validateUpdateProject = [
     optionalString('description', 'description must be a string'),
     optionalEnum('status', PROJECT_STATUSES),
     optionalArray('members'),
-    body("dueDate").isISO8601({ strict: true }).withMessage("dueDate must be a valid date in YYYY-MM-DD format"),
+    optionalDate('dueDate'),
     handleValidationErrors
 ];
 
