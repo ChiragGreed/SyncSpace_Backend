@@ -26,7 +26,7 @@ export const register = async (req, res, next) => {
             success: false
         })
 
-        const user = await userModel.create({ fullName, email, role, password });
+        const user = await userModel.create({ fullName, email: email.toLowerCase(), role, password });
 
         const token = generateToken(user._id);
 

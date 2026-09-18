@@ -16,7 +16,7 @@ export const searchUsers = async (req, res, next) => {
         });
 
         let results = [];
-        console.log(req.user);
+        
         if (search) {
             results = await userModel.find({
                 _id: { $ne: req.user },

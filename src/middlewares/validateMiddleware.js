@@ -69,7 +69,7 @@ export const validateRegister = [
     nonEmptyString('fullName', 'fullName is required and must be a non-empty string'),
     nonEmptyString('email', 'email is required and must be a non-empty string'),
     body('email').isEmail().withMessage('email must be a valid email address'),
-    body("role").notEmpty().withMessage("Role is required").isIn(["user", "admin"]).withMessage("Role must be either user or admin"),
+    body("role").trim().notEmpty().withMessage("Role is required"),
     passwordValidation(true),
     handleValidationErrors
 ];
